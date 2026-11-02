@@ -28,7 +28,7 @@ def send_file(chan, addr, data, timeout=0.05, max_tries=200):
     return {"packets": len(packets), "retransmits": retransmits}
 
 
-def receive_file(chan):
+def receive_file(chan, linger=1.0):
     expected, out = 0, bytearray()
     while True:
         raw, addr = chan.recvfrom(2048)
@@ -45,9 +45,9 @@ def receive_file(chan):
         elif ptype == FIN and seq == expected:
             chan.sendto(make_packet(ACK, seq), addr)
             break
-
+        
     # linger: if our last ACK was lost, the sender will resend FIN
-    chan.settimeout(1.0)
+    chan.settimeout(linger)
     while True:
         try:
             raw, addr = chan.recvfrom(2048)
