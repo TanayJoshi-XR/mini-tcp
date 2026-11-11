@@ -43,7 +43,7 @@ the 30-packet buffer overflows, packets drop, and the window halves.*
 Requires Python 3 (developed on 3.13). The only dependency is matplotlib, for the charts.
 
 ```bash
-git clone https://github.com/<your-username>/<repo-name>.git
+git clone https://github.com/TanayJoshi-XR/mini-tcp.git
 cd <repo-name>
 
 python3 -m venv .venv
