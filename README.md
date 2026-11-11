@@ -44,7 +44,7 @@ Requires Python 3 (developed on 3.13). The only dependency is matplotlib, for th
 
 ```bash
 git clone https://github.com/TanayJoshi-XR/mini-tcp.git
-cd <repo-name>
+cd mini-tcp
 
 python3 -m venv .venv
 source .venv/bin/activate
