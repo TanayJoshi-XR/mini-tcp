@@ -22,6 +22,7 @@ the 30-packet buffer overflows, packets drop, and the window halves.*
 - [Quick start](#quick-start)
 - [Packet format](#packet-format)
 - [Results](#results)
+- [Wireshark dissector](#wireshark-dissector)
 - [Bugs I hit and fixed](#bugs-i-hit-and-fixed)
 - [Project layout](#project-layout)
 - [Limitations](#limitations)
@@ -37,6 +38,7 @@ the 30-packet buffer overflows, packets drop, and the window halves.*
 | **1b. Sliding windows** | Keep many packets in flight | Pipelining, Go-Back-N, Selective Repeat, cumulative ACKs |
 | **2. TCP-like features** | Add what makes TCP, TCP | Three-way handshake, FIN teardown with TIME_WAIT, RTT estimation (SRTT, RTTVAR, RTO per RFC 6298), Karn's algorithm, exponential backoff, fast retransmit, flow control |
 | **3. Congestion control** | Stop overloading the network, not just the receiver | Bottleneck emulator, slow start, congestion avoidance (AIMD), Reno, NewReno fast recovery, CUBIC, fairness measurement |
+| **5. Wireshark dissector** | See the protocol on the wire | Lua dissector that decodes the header, checks the CRC and flags duplicate ACKs, gaps and corrupted packets |
 
 ## Quick start
 
@@ -127,6 +129,32 @@ Two Reno flows sharing the link split it almost equally (Jain's fairness index 0
 
 ![Fairness](results/fairness.png)
 
+## Wireshark dissector
+
+`wireshark/mini_tcp.lua` teaches Wireshark the Mini-TCP header, so captures of a transfer are
+decoded instead of showing as anonymous UDP. It recognises our packets automatically, checks
+the CRC32, and flags duplicate ACKs, sequence gaps, late retransmissions and corrupted packets.
+Two sample captures are included, so you can open them without capturing anything.
+
+```
+  1   SYN  seq=0
+  2   SYN,ACK  seq=0  ack=0  win=256
+  3   ACK  ack=0  win=0
+  4   DATA  seq=0 len=1024
+  ...
+189   DATA  seq=98 len=1024  [GAP: 1 missing before]
+208   ACK  ack=97  win=255  [Dup ACK #1]
+212   ACK  ack=97  win=253  [Dup ACK #3]
+287   DATA  seq=97 len=1024  [Late: fills earlier gap]
+```
+
+![Mini-TCP decoded in Wireshark](results/wireshark_capture.png)
+
+The capture above is the 300 kB Reno transfer: slow start, a buffer overflow that drops
+`seq=97`, the duplicate ACKs it causes, and the retransmission. The dissector finds exactly the
+16 gaps that the emulator reported as drops. A step-by-step beginner guide is in
+[wireshark/README.md](wireshark/README.md).
+
 ## Bugs I hit and fixed
 
 - **Last-ACK problem.** If the final ACK is lost the sender never learns the transfer
@@ -148,6 +176,7 @@ protocol/      packet formats, RTT estimator, Reno and CUBIC, the mini-TCP sende
 experiments/   bottleneck link emulator, comparisons and plots
 tests/         unit tests and end-to-end demos
 results/       generated charts
+wireshark/     Wireshark dissector, sample captures and a beginner guide
 run_all.sh     runs every experiment
 ```
 
@@ -168,7 +197,6 @@ run_all.sh     runs every experiment
 ## Next steps
 
 - Add selective acknowledgements (SACK)
-- A Wireshark dissector for the packet format
 
 ## License
 
